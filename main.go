@@ -9,8 +9,15 @@ func main() {
 	const port = "8080"
 
 	mux := http.NewServeMux()
+
 	rootDir := http.Dir(".")
 	mux.Handle("/", http.FileServer(rootDir))
+
+	logoPath := "/assets/logo.png"
+	mux.HandleFunc(logoPath, func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "."+logoPath)
+	})
+
 	corsMux := middlewareCors(mux)
 
 	srv := &http.Server{
