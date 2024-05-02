@@ -19,11 +19,11 @@ func main() {
 		http.ServeFile(w, r, "."+logoPath)
 	})
 
-	mux.HandleFunc("/healthz", handlerReadiness)
+	mux.HandleFunc("GET /healthz", handlerReadiness)
 
-	mux.HandleFunc("/metrics", config.middleWareMetricsGet)
+	mux.HandleFunc("GET /metrics", config.middleWareMetricsGet)
 
-	mux.HandleFunc("/reset", config.middleWareMetricsReset)
+	mux.HandleFunc("GET /reset", config.middleWareMetricsReset)
 
 	corsMux := middlewareCors(mux)
 
