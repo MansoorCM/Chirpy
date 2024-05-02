@@ -9,14 +9,21 @@ func main() {
 	const port = "8080"
 
 	mux := http.NewServeMux()
+	config := apiConfig{fileserverHits: 0}
 
 	rootDir := http.Dir(".")
-	mux.Handle("/", http.FileServer(rootDir))
+	mux.Handle("/app/*", config.middleWareMetricsInc(http.StripPrefix("/app", http.FileServer(rootDir))))
 
 	logoPath := "/assets/logo.png"
-	mux.HandleFunc(logoPath, func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("/app"+logoPath, func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "."+logoPath)
 	})
+
+	mux.HandleFunc("/healthz", handlerReadiness)
+
+	mux.HandleFunc("/metrics", config.middleWareMetricsGet)
+
+	mux.HandleFunc("/reset", config.middleWareMetricsReset)
 
 	corsMux := middlewareCors(mux)
 
