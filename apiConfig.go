@@ -17,9 +17,18 @@ func (cfg *apiConfig) middleWareMetricsInc(next http.Handler) http.Handler {
 }
 
 func (cfg *apiConfig) middleWareMetricsGet(w http.ResponseWriter, r *http.Request) {
-	w.Header().Add("Content-Type", "text/plain; charset=utf-8")
+
+	w.Header().Add("Content-Type", "text/html")
 	w.WriteHeader(http.StatusOK)
-	hits := fmt.Sprintf("Hits: %d", cfg.fileserverHits)
+	hits := fmt.Sprintf(`<html>
+
+<body>
+    <h1>Welcome, Chirpy Admin</h1>
+    <p>Chirpy has been visited %d times!</p>
+</body>
+
+</html>
+`, cfg.fileserverHits)
 	w.Write([]byte(hits))
 }
 
