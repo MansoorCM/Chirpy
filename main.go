@@ -25,6 +25,8 @@ func main() {
 
 	mux.HandleFunc("GET /api/reset", config.middleWareMetricsReset)
 
+	mux.HandleFunc("POST /api/validate_chirp", chirpsValidate)
+
 	corsMux := middlewareCors(mux)
 
 	srv := &http.Server{
