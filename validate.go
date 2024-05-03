@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"strings"
 )
 
 func chirpsValidate(w http.ResponseWriter, r *http.Request) {
@@ -21,10 +22,22 @@ func chirpsValidate(w http.ResponseWriter, r *http.Request) {
 		resp := ValidateError{Error: "chirp is too long"}
 		respondWithJson(w, 400, resp)
 	} else {
-		resp := ValidateSuccess{true}
+		resp := ValidateSuccess{getCleanedBody(chirp.Body)}
 		respondWithJson(w, 200, resp)
 	}
 
+}
+
+func getCleanedBody(body string) string {
+	badWords := map[string]bool{"kerfuffle": true, "sharbert": true, "fornax": true}
+	words := strings.Split(body, " ")
+	for i, word := range words {
+		lowercaseWord := strings.ToLower(word)
+		if _, ok := badWords[lowercaseWord]; ok {
+			words[i] = "****"
+		}
+	}
+	return strings.Join(words, " ")
 }
 
 func respondWithJson(w http.ResponseWriter, code int, payload interface{}) {
@@ -48,5 +61,5 @@ type ValidateError struct {
 }
 
 type ValidateSuccess struct {
-	Valid bool `json:"valid"`
+	CleanedBody string `json:"cleaned_body"`
 }
