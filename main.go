@@ -3,13 +3,20 @@ package main
 import (
 	"log"
 	"net/http"
+
+	"github.com/MansoorCM/Chirpy/internal/database"
 )
 
 func main() {
 	const port = "8080"
 
 	mux := http.NewServeMux()
-	config := apiConfig{fileserverHits: 0}
+
+	db, err := database.NewDB("database.json")
+	if err != nil {
+		log.Fatal(err)
+	}
+	config := apiConfig{fileserverHits: 0, DB: db}
 
 	rootDir := http.Dir(".")
 	mux.Handle("/app/*", config.middleWareMetricsInc(http.StripPrefix("/app", http.FileServer(rootDir))))
@@ -25,7 +32,8 @@ func main() {
 
 	mux.HandleFunc("GET /api/reset", config.middleWareMetricsReset)
 
-	mux.HandleFunc("POST /api/validate_chirp", chirpsValidate)
+	mux.HandleFunc("POST /api/chirps", config.handlerChirpsCreate)
+	mux.HandleFunc("GET /api/chirps", config.handlerChirpsRetrieve)
 
 	corsMux := middlewareCors(mux)
 

@@ -3,10 +3,13 @@ package main
 import (
 	"fmt"
 	"net/http"
+
+	"github.com/MansoorCM/Chirpy/internal/database"
 )
 
 type apiConfig struct {
 	fileserverHits int
+	DB             *database.DB
 }
 
 func (cfg *apiConfig) middleWareMetricsInc(next http.Handler) http.Handler {

@@ -2,30 +2,18 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"log"
 	"net/http"
 	"strings"
 )
 
-func chirpsValidate(w http.ResponseWriter, r *http.Request) {
-	chirp := ChirpBody{}
-
-	decoder := json.NewDecoder(r.Body)
-	err := decoder.Decode(&chirp)
-	if err != nil {
-		log.Printf("error decoding parameters: %s", err)
-		w.WriteHeader(500)
-		return
+func chirpsValidate(body string) (string, error) {
+	if len(body) > 140 {
+		return "", errors.New("chirp is too long")
 	}
-
-	if len(chirp.Body) > 140 {
-		resp := ValidateError{Error: "chirp is too long"}
-		respondWithJson(w, 400, resp)
-	} else {
-		resp := ValidateSuccess{getCleanedBody(chirp.Body)}
-		respondWithJson(w, 200, resp)
-	}
-
+	cleaned := getCleanedBody(body)
+	return cleaned, nil
 }
 
 func getCleanedBody(body string) string {
@@ -41,7 +29,7 @@ func getCleanedBody(body string) string {
 }
 
 func respondWithJson(w http.ResponseWriter, code int, payload interface{}) {
-	w.Header().Add("Content-type", "application/json")
+	w.Header().Set("Content-type", "application/json")
 	dat, err := json.Marshal(payload)
 	if err != nil {
 		log.Printf("error marshalling json: %s", err)
@@ -52,12 +40,25 @@ func respondWithJson(w http.ResponseWriter, code int, payload interface{}) {
 	w.Write(dat)
 }
 
+func respondWithError(w http.ResponseWriter, code int, msg string) {
+	if code > 499 {
+		log.Printf("Responding with 5XX error: %s", msg)
+	}
+	type errorResponse struct {
+		Error string `json:"error"`
+	}
+	respondWithJson(w, code, errorResponse{
+		Error: msg,
+	})
+}
+
 type ChirpBody struct {
 	Body string `json:"body"`
 }
 
-type ValidateError struct {
-	Error string `json:"error"`
+type Chirp struct {
+	Id   int    `json:"id"`
+	Body string `json:"body"`
 }
 
 type ValidateSuccess struct {
