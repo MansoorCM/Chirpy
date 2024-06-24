@@ -3,6 +3,7 @@ package main
 import (
 	"net/http"
 	"sort"
+	"strconv"
 )
 
 func (cfg *apiConfig) handlerChirpsRetrieve(w http.ResponseWriter, r *http.Request) {
@@ -25,4 +26,21 @@ func (cfg *apiConfig) handlerChirpsRetrieve(w http.ResponseWriter, r *http.Reque
 	})
 
 	respondWithJson(w, http.StatusOK, chirps)
+}
+
+func (cfg *apiConfig) handlerGetChirp(w http.ResponseWriter, r *http.Request) {
+	id := r.PathValue("id")
+	idInt, err := strconv.Atoi(id)
+	if err != nil {
+		respondWithError(w, 404, "query id is invalid.")
+	}
+	chirp, err := cfg.DB.GetChirp(idInt)
+
+	if err != nil {
+		respondWithError(w, 404, "chirp not found")
+	}
+
+	// chirpWithGivenId := []Chirp{}
+	// chirpWithGivenId = append(chirpWithGivenId, Chirp{Id: chirp.ID, Body: chirp.Body})
+	respondWithJson(w, http.StatusOK, chirp)
 }
