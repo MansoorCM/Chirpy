@@ -37,6 +37,8 @@ func main() {
 
 	mux.HandleFunc("GET /api/chirps/{id}", config.handlerGetChirp)
 
+	mux.HandleFunc("POST /api/users", config.handlerUsersCreate)
+
 	corsMux := middlewareCors(mux)
 
 	srv := &http.Server{

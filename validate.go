@@ -64,3 +64,12 @@ type Chirp struct {
 type ValidateSuccess struct {
 	CleanedBody string `json:"cleaned_body"`
 }
+
+type UserBody struct {
+	Email string `json:"email"`
+}
+
+type User struct {
+	Id    int    `json:"id"`
+	Email string `json:"email"`
+}
