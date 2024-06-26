@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"os"
 	"sync"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
 type DB struct {
@@ -14,8 +16,8 @@ type DB struct {
 }
 
 type DBStructure struct {
-	Chirps map[int]Chirp `json:"chirps"`
-	Users  map[int]User  `json:"users"`
+	Chirps map[int]Chirp   `json:"chirps"`
+	Users  map[string]User `json:"users"`
 }
 
 type Chirp struct {
@@ -24,8 +26,9 @@ type Chirp struct {
 }
 
 type User struct {
-	ID    int    `json:"id"`
-	Email string `json:"email"`
+	ID       int    `json:"id"`
+	Email    string `json:"email"`
+	Password string `json:"password"`
 }
 
 func NewDB(path string) (*DB, error) {
@@ -58,22 +61,50 @@ func (db *DB) CreateChirp(body string) (Chirp, error) {
 	return chirp, nil
 }
 
-func (db *DB) CreateUser(email string) (User, error) {
+func (db *DB) CreateUser(email string, password string) (User, error) {
 	dbStructure, err := db.loadDB()
 	if err != nil {
 		return User{}, err
 	}
 
-	id := len(dbStructure.Users) + 1
-	user := User{
-		ID:    id,
-		Email: email,
+	_, found := dbStructure.Users[email]
+	if found {
+		return User{}, fmt.Errorf("email already exists")
 	}
-	dbStructure.Users[id] = user
+	id := len(dbStructure.Users) + 1
+	hashed, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		return User{}, fmt.Errorf("password is invalid")
+	}
+	user := User{
+		ID:       id,
+		Email:    email,
+		Password: string(hashed),
+	}
+	dbStructure.Users[email] = user
 
 	err = db.writeDB(dbStructure)
 	if err != nil {
 		return User{}, err
+	}
+
+	return user, nil
+}
+
+func (db *DB) UserLogin(email string, password string) (User, error) {
+	dbStructure, err := db.loadDB()
+	if err != nil {
+		return User{}, err
+	}
+
+	user, found := dbStructure.Users[email]
+	if !found {
+		return User{}, fmt.Errorf("user doesn't exist")
+	}
+
+	matchError := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
+	if matchError != nil {
+		return User{}, fmt.Errorf("wrong password")
 	}
 
 	return user, nil
@@ -110,7 +141,7 @@ func (db *DB) GetChirp(id int) (Chirp, error) {
 func (db *DB) createDB() error {
 	dbStructure := DBStructure{
 		Chirps: map[int]Chirp{},
-		Users:  map[int]User{},
+		Users:  map[string]User{},
 	}
 	return db.writeDB(dbStructure)
 }

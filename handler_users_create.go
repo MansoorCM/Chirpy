@@ -15,12 +15,17 @@ func (cfg *apiConfig) handlerUsersCreate(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	user, err := cfg.DB.CreateUser(userBody.Email)
+	user, err := cfg.DB.CreateUser(userBody.Email, userBody.Password)
 
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "couldn't create user")
 		return
 	}
 
-	respondWithJson(w, http.StatusCreated, user)
+	respondWithJson(w, http.StatusCreated, UserResp{Id: user.ID, Email: user.Email})
+}
+
+type UserResp struct {
+	Id    int    `json:"id"`
+	Email string `json:"email"`
 }
